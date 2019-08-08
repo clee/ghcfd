@@ -1,6 +1,8 @@
+#!/bin/env python
 import csv
 from matplotlib import pyplot
 from github import Github
+from functools import reduce
 import numpy
 import datetime
 import pickle
@@ -34,19 +36,14 @@ if issues_dump == None:
     issues = repo.get_issues("*", "open")
     for issue in issues:
         issues_arr_dump.append(issue)
+    issues_arr_dump = [i for i in issues_arr_dump if i.pull_request is None]
     pickle.dump(issues_arr_dump, open("issues_dump", "wb"))
+
 issues_dump = pickle.load(open("issues_dump", "rb"))
 issues_dump.reverse()
 
-max_issue_num = 0
-max_issue = None
-min_issue = None
-for issue in issues_dump:
-    if issue.number > max_issue_num:
-        max_issue_num = issue.number
-        max_issue = issue
-    if issue.number == 1:
-        min_issue = issue
+max_issue = reduce((lambda a, b: a if a.number > b.number else b), issues_dump)
+min_issue = reduce((lambda a, b: a if a.number < b.number else b), issues_dump)
 
 proj_start_date = min_issue.created_at
 proj_end_date = max_issue.created_at
